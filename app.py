@@ -15,10 +15,30 @@ def load_data(url):
 
 try:
   df = load_data(SHEET_URL)
-  # Clean column names
+  # Clean all column names to remove accidental spaces
   df.columns = df.columns.str.strip()
 except Exception as e:
   st.error(f"Error loading data from Google Sheet: {e}")
+  st.stop()
+
+
+# Helper function to find columns case-insensitively
+def find_column(dataframe, possible_names):
+  for col in dataframe.columns:
+    if col.lower() in [name.lower() for name in possible_names]:
+      return col
+  return None
+
+
+# Locate student ID and PIN columns automatically
+id_col_name = find_column(df, ["StudentID", "Student ID", "ID"])
+pin_col_name = find_column(df, ["PIN", "Pin", "Password"])
+
+if not id_col_name or not pin_col_name:
+  st.error(
+      "Configuration Error: Could not find 'StudentID' or 'PIN' columns in"
+      " your Google Sheet. Please check your column headers."
+  )
   st.stop()
 
 st.title("🔬 Elementary Science Grade Portal")
@@ -39,12 +59,12 @@ if not st.session_state.logged_in:
 
     if submit_button:
       # Ensure inputs and columns are strings for safe comparison
-      df["StudentID"] = df["StudentID"].astype(str).str.strip()
-      df["PIN"] = df["PIN"].astype(str).str.strip()
+      df[id_col_name] = df[id_col_name].astype(str).str.strip()
+      df[pin_col_name] = df[pin_col_name].astype(str).str.strip()
 
       match = df[
-          (df["StudentID"] == input_id.strip())
-          & (df["PIN"] == input_pin.strip())
+          (df[id_col_name] == input_id.strip())
+          & (df[pin_col_name] == input_pin.strip())
       ]
 
       if not match.empty:
@@ -56,12 +76,12 @@ if not st.session_state.logged_in:
 
 # --- SECURE DASHBOARD ---
 else:
-  student_data = df[df["StudentID"] == st.session_state.student_id]
+  student_data = df[df[id_col_name] == st.session_state.student_id]
 
   if not student_data.empty:
     student_row = student_data.iloc[0]
 
-    # Combine Chinese and English names if they exist
+    # Handle names flexibly
     chinese_name = (
         str(student_row["ChineseName"])
         if "ChineseName" in student_row
@@ -79,11 +99,11 @@ else:
     st.success(f"Welcome back, {display_name if display_name else 'Student'}!")
 
     st.subheader("Your Grade Report")
-    st.write(f"**Student ID:** {student_row['StudentID']}")
+    st.write(f"**Student ID:** {student_row[id_col_name]}")
     if "Class" in student_row:
       st.write(f"**Class:** {student_row['Class']}")
 
-    # Display metric cards for quick viewing
+    # Display metric cards for quick viewing if columns exist
     cols = st.columns(3)
     if "Quiz_1" in student_row:
       cols[0].metric("Quiz 1", student_row["Quiz_1"])
@@ -96,7 +116,7 @@ else:
 
     # Show full student record (hiding the PIN column for security)
     st.markdown("### Detailed Scores & Homework Corrections")
-    st.dataframe(student_data.drop(columns=["PIN"], errors="ignore"))
+    st.dataframe(student_data.drop(columns=[pin_col_name], errors="ignore"))
 
     # Logout button
     if st.button("Log Out"):
