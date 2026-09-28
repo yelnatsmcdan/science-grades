@@ -5,7 +5,7 @@ st.title("📊 Student Grade & Rewrite Tracker")
 
 # --- CONNECT TO YOUR LIVE GOOGLE SHEET ---
 SHEET_URL = (
-   "https://docs.google.com/spreadsheets/d/16c-GKmXsPir279UyT71NinX30Hy-xH6ovjZeVo_yTZU/export?format=csv&gid=0"
+   "https://docs.google.com/spreadsheets/d/16c-GKmXsPir279UyT71NinX30Hy-xH6ovjZeVo_yTZU/export?format=csv"
 )
 
 
