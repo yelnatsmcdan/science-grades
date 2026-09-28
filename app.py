@@ -196,7 +196,7 @@ else:
     # Dynamic Rewrite Prompt with Specific Booklet Page Numbers
     if has_hw1:
       try:
-        if float(student_row["Hw_1"]) < 80:
+        if float(student_row["Hw_1"]) < 90:
           pages_to_do = active_hw_pages.get("Hw_1", "the assigned pages")
           st.info(
               f"💡 **Homework 1 Rewrite Opportunity:** Your current grade on"
