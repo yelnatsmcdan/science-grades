@@ -41,6 +41,10 @@ if not id_col_name or not pin_col_name:
   )
   st.stop()
 
+# Ensure ID and PIN columns are always treated as clean strings globally
+df[id_col_name] = df[id_col_name].astype(str).str.strip()
+df[pin_col_name] = df[pin_col_name].astype(str).str.strip()
+
 st.title("🔬 Elementary Science Grade Portal")
 st.markdown("Please log in with your Student ID and PIN to view your scores.")
 
@@ -58,10 +62,6 @@ if not st.session_state.logged_in:
     submit_button = st.form_submit_button("Log In")
 
     if submit_button:
-      # Ensure inputs and columns are strings for safe comparison
-      df[id_col_name] = df[id_col_name].astype(str).str.strip()
-      df[pin_col_name] = df[pin_col_name].astype(str).str.strip()
-
       match = df[
           (df[id_col_name] == input_id.strip())
           & (df[pin_col_name] == input_pin.strip())
@@ -69,7 +69,7 @@ if not st.session_state.logged_in:
 
       if not match.empty:
         st.session_state.logged_in = True
-        st.session_state.student_id = input_id
+        st.session_state.student_id = input_id.strip()
         st.rerun()
       else:
         st.error("Invalid Student ID or PIN. Please try again.")
