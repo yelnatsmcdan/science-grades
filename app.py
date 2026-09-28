@@ -41,6 +41,29 @@ if not id_col_name or not pin_col_name:
 df[id_col_name] = df[id_col_name].astype(str).str.strip()
 df[pin_col_name] = df[pin_col_name].astype(str).str.strip()
 
+
+# --- LETTER GRADE HELPER FUNCTION ---
+def get_letter_grade(score_val):
+  try:
+    score = float(score_val)
+    if score >= 90:
+      return "A+"
+    elif score >= 80:
+      return "A"
+    elif score >= 75:
+      return "B+"
+    elif score >= 70:
+      return "B"
+    elif score >= 65:
+      return "C+"
+    elif score >= 60:
+      return "C"
+    else:
+      return "D"
+  except:
+    return ""
+
+
 # --- SIDEBAR QR CODE FOR STUDENTS ---
 with st.sidebar:
   st.subheader("📱 Quick Login")
@@ -48,6 +71,20 @@ with st.sidebar:
   app_url = "https://science-grades-vth5uctmjxvsozrmdogwtk.streamlit.app/"
   qr_api_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={app_url}"
   st.image(qr_api_url, width=160)
+
+  st.divider()
+  st.markdown("### 📋 Grading Scale")
+  st.markdown(
+      """
+    * **90 ~ 100** ➔ A+
+    * **80 ~ 89** ➔ A
+    * **75 ~ 79** ➔ B+
+    * **70 ~ 74** ➔ B
+    * **65 ~ 69** ➔ C+
+    * **60 ~ 64** ➔ C
+    * **0 ~ 59** ➔ D
+    """
+  )
 
 st.title("🔬 Elementary Science Grade Portal")
 st.markdown("Please log in with your Student ID and PIN to view your scores.")
@@ -104,12 +141,48 @@ else:
       st.write(f"**Class:** {student_row['Class']}")
 
     cols = st.columns(3)
+
+    # Quiz 1 Display with Letter Grade
     if "Quiz_1" in student_row and student_row["Quiz_1"] != "":
-      cols[0].metric("Quiz 1", student_row["Quiz_1"])
+      q1_val = student_row["Quiz_1"]
+      q1_letter = get_letter_grade(q1_val)
+      cols[0].metric(
+          "Quiz 1",
+          f"{q1_val}" + (f" ({q1_letter})" if q1_letter else ""),
+      )
+
+    # Hw 1 Display with Letter Grade & Rewrite Advice
+    has_hw1 = False
     if "Hw_1" in student_row and student_row["Hw_1"] != "":
-      cols[1].metric("Hw 1", student_row["Hw_1"])
+      hw1_val = student_row["Hw_1"]
+      hw1_letter = get_letter_grade(hw1_val)
+      cols[1].metric(
+          "Hw 1",
+          f"{hw1_val}" + (f" ({hw1_letter})" if hw1_letter else ""),
+      )
+      has_hw1 = True
+
+    # Hw Average Display with Letter Grade
     if "Hw_Average" in student_row and student_row["Hw_Average"] != "":
-      cols[2].metric("Hw Average", student_row["Hw_Average"])
+      hwa_val = student_row["Hw_Average"]
+      hwa_letter = get_letter_grade(hwa_val)
+      cols[2].metric(
+          "Hw Average",
+          f"{hwa_val}" + (f" ({hwa_letter})" if hwa_letter else ""),
+      )
+
+    # Dynamic Rewrite Prompt if Homework is below 80 (A range)
+    if has_hw1:
+      try:
+        if float(student_row["Hw_1"]) < 80:
+          st.info(
+              "💡 **Homework Rewrite Opportunity:** Your current grade on"
+              " Homework 1 is below an **A**. Remember, you can rewrite your"
+              " corrections and average it with 100 to push your score up into"
+              " the **A** range!"
+          )
+      except:
+        pass
 
     st.divider()
 
