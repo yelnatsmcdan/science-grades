@@ -140,8 +140,6 @@ else:
     if "Class" in student_row:
       st.write(f"**Class:** {student_row['Class']}")
 
-    cols = st.columns(2)
-
     # --- SEPARATE GRADE 5 & GRADE 6 BOOKLET PAGE MAPPINGS ---
     HW_PAGES_G5 = {
         "Hw_1": "Pages 3",
@@ -170,36 +168,63 @@ else:
     else:
       active_hw_pages = HW_PAGES_G6
 
-    # Hw 1 Display - Showing ONLY Letter Grade
-    if "Hw_1" in student_row and pd.notna(student_row["Hw_1"]) and str(student_row["Hw_1"]).strip() != "":
-      hw1_val = student_row["Hw_1"]
-      hw1_letter = get_letter_grade(hw1_val)
-      cols[0].metric("Hw 1", hw1_letter)
+    # --- COLLECT ALL HOMEWORK COLUMNS DYNAMICALLY ---
+    hw_columns = [
+        col
+        for col in df.columns
+        if col.startswith("Hw_") and col != "Hw_Average"
+    ]
 
-    # Hw Average Display - Showing ONLY Letter Grade
-    if "Hw_Average" in student_row and pd.notna(student_row["Hw_Average"]) and str(student_row["Hw_Average"]).strip() != "":
+    if hw_columns:
+      # Display metric cards dynamically in rows of 3
+      num_cols = 3
+      for i in range(0, len(hw_columns), num_cols):
+        row_cols = st.columns(num_cols)
+        for j in range(num_cols):
+          if i + j < len(hw_columns):
+            col_name = hw_columns[i + j]
+            if (
+                col_name in student_row
+                and pd.notna(student_row[col_name])
+                and str(student_row[col_name]).strip() != ""
+            ):
+              score_val = student_row[col_name]
+              letter = get_letter_grade(score_val)
+              display_title = col_name.replace("_", " ")
+              row_cols[j].metric(display_title, letter)
+
+    # Also display Hw Average if it exists
+    if (
+        "Hw_Average" in student_row
+        and pd.notna(student_row["Hw_Average"])
+        and str(student_row["Hw_Average"]).strip() != ""
+    ):
       hwa_val = student_row["Hw_Average"]
       hwa_letter = get_letter_grade(hwa_val)
-      cols[1].metric("Hw Average", hwa_letter)
+      st.markdown("---")
+      st.metric("Homework Average", hwa_letter)
 
     st.divider()
 
     # --- AUTOMATIC REWRITE PROMPTS FOR ALL HOMEWORKS (<= 90) ---
-    for col_name, score_val in student_row.items():
-      if col_name.startswith("Hw_") and col_name != "Hw_Average":
+    for col_name in hw_columns:
+      if (
+          col_name in student_row
+          and pd.notna(student_row[col_name])
+          and str(student_row[col_name]).strip() != ""
+      ):
         try:
-          if pd.notna(score_val) and str(score_val).strip() != "":
-            score_num = float(score_val)
-            if score_num <= 90:
-              hw_letter = get_letter_grade(score_num)
-              pages_to_do = active_hw_pages.get(col_name, "the assigned pages")
-              display_hw_name = col_name.replace("_", " ")
-              st.info(
-                  f"💡 **{display_hw_name} Rewrite Opportunity:** Your current"
-                  f" grade is **{hw_letter}**. Please complete your"
-                  f" corrections for **{pages_to_do}** in your booklet and"
-                  " average it with 100 to push your score higher!"
-              )
+          score_num = float(student_row[col_name])
+          if score_num <= 90:
+            hw_letter = get_letter_grade(score_num)
+            pages_to_do = active_hw_pages.get(col_name, "the assigned pages")
+            display_hw_name = col_name.replace("_", " ")
+            st.info(
+                f"💡 **{display_hw_name} Rewrite Opportunity:** Your current"
+                f" grade is **{hw_letter}**. Please complete your"
+                f" corrections for **{pages_to_do}** in your booklet and"
+                " average it with 100 to push your score higher!"
+            )
         except:
           pass
 
@@ -208,7 +233,9 @@ else:
     for col in display_df.columns:
       if "hw" in col.lower():
         display_df[col] = display_df[col].apply(
-            lambda x: get_letter_grade(x) if pd.notna(x) and str(x).strip() != "" else x
+            lambda x: get_letter_grade(x)
+            if pd.notna(x) and str(x).strip() != ""
+            else x
         )
 
     st.markdown("### Detailed Grades")
