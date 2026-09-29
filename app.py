@@ -140,7 +140,7 @@ else:
     if "Class" in student_row:
       st.write(f"**Class:** {student_row['Class']}")
 
-   cols = st.columns(2)  # Changed to 2 columns since we removed quizzes
+    cols = st.columns(2)
 
     # --- SEPARATE GRADE 5 & GRADE 6 BOOKLET PAGE MAPPINGS ---
     HW_PAGES_G5 = {
@@ -149,7 +149,7 @@ else:
         "Hw_3": "Pages 5",
         "Hw_4": "Pages 6",
         "Hw_5": "Pages 7 & 8",
-        "Hw_6": "Pages 10",
+        "Hw_6": "Pages 9 & 10",
         "Hw_7": "Pages 11 & 12",
         "Hw_8": "Pages 13",
         "Hw_9": "Pages 14",
@@ -187,7 +187,6 @@ else:
     # Dynamic Rewrite Prompt (Triggered at 90 and below, showing letter grade)
     if has_hw1:
       try:
-        # Changed threshold to <= 90 based on your preference
         if float(student_row["Hw_1"]) <= 90:
           pages_to_do = active_hw_pages.get("Hw_1", "the assigned pages")
           st.info(
