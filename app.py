@@ -140,36 +140,7 @@ else:
     if "Class" in student_row:
       st.write(f"**Class:** {student_row['Class']}")
 
-    cols = st.columns(3)
-
-    # Quiz 1 Display with Letter Grade
-    if "Quiz_1" in student_row and student_row["Quiz_1"] != "":
-      q1_val = student_row["Quiz_1"]
-      q1_letter = get_letter_grade(q1_val)
-      cols[0].metric(
-          "Quiz 1",
-          f"{q1_val}" + (f" ({q1_letter})" if q1_letter else ""),
-      )
-
-    # Hw 1 Display with Letter Grade
-    has_hw1 = False
-    if "Hw_1" in student_row and student_row["Hw_1"] != "":
-      hw1_val = student_row["Hw_1"]
-      hw1_letter = get_letter_grade(hw1_val)
-      cols[1].metric(
-          "Hw 1",
-          f"{hw1_val}" + (f" ({hw1_letter})" if hw1_letter else ""),
-      )
-      has_hw1 = True
-
-    # Hw Average Display with Letter Grade
-    if "Hw_Average" in student_row and student_row["Hw_Average"] != "":
-      hwa_val = student_row["Hw_Average"]
-      hwa_letter = get_letter_grade(hwa_val)
-      cols[2].metric(
-          "Hw Average",
-          f"{hwa_val}" + (f" ({hwa_letter})" if hwa_letter else ""),
-      )
+   cols = st.columns(2)  # Changed to 2 columns since we removed quizzes
 
     # --- SEPARATE GRADE 5 & GRADE 6 BOOKLET PAGE MAPPINGS ---
     HW_PAGES_G5 = {
@@ -177,6 +148,11 @@ else:
         "Hw_2": "Pages 4",
         "Hw_3": "Pages 5",
         "Hw_4": "Pages 6",
+        "Hw_5": "Pages 7 & 8",
+        "Hw_6": "Pages 10",
+        "Hw_7": "Pages 11 & 12",
+        "Hw_8": "Pages 13",
+        "Hw_9": "Pages 14",
     }
 
     HW_PAGES_G6 = {
@@ -184,6 +160,7 @@ else:
         "Hw_2": "Pages 5 & 6",
         "Hw_3": "Pages 7 & 8",
         "Hw_4": "Pages 9 & 10",
+        "Hw_5": "Pages 11 & 12",
     }
 
     # Automatically select the correct booklet based on student's class
@@ -193,16 +170,31 @@ else:
     else:
       active_hw_pages = HW_PAGES_G6
 
-    # Dynamic Rewrite Prompt with Specific Booklet Page Numbers
+    # Hw 1 Display - Showing ONLY Letter Grade
+    has_hw1 = False
+    if "Hw_1" in student_row and student_row["Hw_1"] != "":
+      hw1_val = student_row["Hw_1"]
+      hw1_letter = get_letter_grade(hw1_val)
+      cols[0].metric("Hw 1", hw1_letter if hw1_letter else "-")
+      has_hw1 = True
+
+    # Hw Average Display - Showing ONLY Letter Grade
+    if "Hw_Average" in student_row and student_row["Hw_Average"] != "":
+      hwa_val = student_row["Hw_Average"]
+      hwa_letter = get_letter_grade(hwa_val)
+      cols[1].metric("Hw Average", hwa_letter if hwa_letter else "-")
+
+    # Dynamic Rewrite Prompt (Triggered at 90 and below, showing letter grade)
     if has_hw1:
       try:
-        if float(student_row["Hw_1"]) < 90:
+        # Changed threshold to <= 90 based on your preference
+        if float(student_row["Hw_1"]) <= 90:
           pages_to_do = active_hw_pages.get("Hw_1", "the assigned pages")
           st.info(
-              f"💡 **Homework 1 Rewrite Opportunity:** Your current grade on"
-              f" Homework 1 is **{hw1_val} ({hw1_letter})**. Please complete"
-              f" your corrections for **{pages_to_do}** in your booklet and"
-              " average it with 100 to push your score up into the **A** range!"
+              f"💡 **Homework 1 Rewrite Opportunity:** Your current grade is"
+              f" **{hw1_letter}**. Please complete your corrections for"
+              f" **{pages_to_do}** in your booklet and average it with 100 to"
+              " push your score higher!"
           )
       except:
         pass
