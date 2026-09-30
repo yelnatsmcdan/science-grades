@@ -135,10 +135,23 @@ else:
 
     st.success(f"Welcome back, {display_name if display_name else 'Student'}!")
 
-    st.subheader("Your Grade Report")
-    st.write(f"**Student ID:** {student_row[id_col_name]}")
-    if "Class" in student_row:
-      st.write(f"**Class:** {student_row['Class']}")
+    # --- STYLE B HEADER CONTAINER ---
+    class_name = (
+        str(student_row["Class"])
+        if "Class" in student_row and pd.notna(student_row["Class"])
+        else ""
+    )
+    student_id_val = student_row[id_col_name]
+
+    st.markdown(
+        f"""
+        <div style="background-color: #2b93a0; padding: 12px 16px; border-radius: 6px; color: white; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: white;">Your Grade Report</h3>
+            <p style="margin: 4px 0 0 0; font-size: 15px;"><b>Student ID:</b> {student_id_val} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Class:</b> {class_name}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # --- SEPARATE GRADE 5 & GRADE 6 BOOKLET PAGE MAPPINGS ---
     HW_PAGES_G5 = {
@@ -162,38 +175,30 @@ else:
     }
 
     # Automatically select the correct booklet based on student's class
-    student_class = str(student_row.get("Class", ""))
-    if "5" in student_class:
+    if "5" in class_name:
       active_hw_pages = HW_PAGES_G5
     else:
       active_hw_pages = HW_PAGES_G6
 
-    # --- COLLECT ALL HOMEWORK COLUMNS DYNAMICALLY ---
+    # --- COLLECT ALL HOMEWORK COLUMNS + AVERAGE FOR SINGLE HORIZONTAL ROW ---
     hw_columns = [
         col
         for col in df.columns
         if col.startswith("Hw_") and col != "Hw_Average"
     ]
 
-    if hw_columns:
-      # Display metric cards dynamically in rows of 3
-      num_cols = 3
-      for i in range(0, len(hw_columns), num_cols):
-        row_cols = st.columns(num_cols)
-        for j in range(num_cols):
-          if i + j < len(hw_columns):
-            col_name = hw_columns[i + j]
-            if (
-                col_name in student_row
-                and pd.notna(student_row[col_name])
-                and str(student_row[col_name]).strip() != ""
-            ):
-              score_val = student_row[col_name]
-              letter = get_letter_grade(score_val)
-              display_title = col_name.replace("_", " ")
-              row_cols[j].metric(display_title, letter)
+    metrics_data = []
+    for col_name in hw_columns:
+      if (
+          col_name in student_row
+          and pd.notna(student_row[col_name])
+          and str(student_row[col_name]).strip() != ""
+      ):
+        score_val = student_row[col_name]
+        letter = get_letter_grade(score_val)
+        display_title = col_name.replace("_", " ")
+        metrics_data.append((display_title, letter))
 
-    # Also display Hw Average if it exists
     if (
         "Hw_Average" in student_row
         and pd.notna(student_row["Hw_Average"])
@@ -201,8 +206,13 @@ else:
     ):
       hwa_val = student_row["Hw_Average"]
       hwa_letter = get_letter_grade(hwa_val)
-      st.markdown("---")
-      st.metric("Homework Average", hwa_letter)
+      metrics_data.append(("Hw Avg", hwa_letter))
+
+    # Render all metrics side-by-side in one single horizontal row
+    if metrics_data:
+      row_cols = st.columns(len(metrics_data))
+      for idx, (title, letter) in enumerate(metrics_data):
+        row_cols[idx].metric(title, letter)
 
     st.divider()
 
