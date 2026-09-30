@@ -232,8 +232,8 @@ else:
             st.info(
                 f"💡 **{display_hw_name} Rewrite Opportunity:** Your current"
                 f" grade is **{hw_letter}**. Please complete your"
-                f" corrections for **{pages_to_do}** in your booklet and"
-                " average it with 100 to push your score higher!"
+                f" corrections for **{pages_to_do}** in your booklet to improve"
+                " your scores."
             )
         except:
           pass
